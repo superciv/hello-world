@@ -3,7 +3,7 @@
 #!author=superciv
 
 [Script]
-http-response ^https?:\/\/oauth\.secure\.pixiv\.net\/(auth\/token) requires-body=1,script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/master/pixivAds.js
+http-response ^https?:\/\/oauth\.secure\.pixiv\.net\/(auth\/token) script-path=https://raw.githubusercontent.com/ddgksf2013/Scripts/master/pixivAds.js,requires-body=true, timeout=10, tag=pixiv去广告
 
 [MITM] 
 hostname = oauth.secure.pixiv.net

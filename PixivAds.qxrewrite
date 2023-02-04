@@ -5,4 +5,4 @@
 
 hostname = oauth.secure.pixiv.net
 
-^https?:\/\/oauth\.secure\.pixiv\.net\/(auth\/token) url script-requires-body https://raw.githubusercontent.com/ddgksf2013/Scripts/master/pixivAds.js
+^https?:\/\/oauth\.secure\.pixiv\.net\/(auth\/token) url script-response-body https://github.com/ddgksf2013/Scripts/raw/master/pixivAds.js

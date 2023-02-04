@@ -1,0 +1,9 @@
+#!name=pixiv
+#!desc=pixiv去广告
+#!author=weixinyu
+
+[Script]
+http-response ^https?:\/\/oauth\.secure\.pixiv\.net\/(auth\/token) requires-body=1,script-path=https://github.com/ddgksf2013/Scripts/raw/master/pixivAds.js
+
+[MITM] 
+hostname = oauth.secure.pixiv.net

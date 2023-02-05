@@ -1,8 +1,0 @@
-// ==UserScript==
-// @ScriptName        pixiv去广告
-// @Author            @setosa
-// ==/UserScript==
-
-hostname = oauth.secure.pixiv.net
-
-^https?:\/\/oauth\.secure\.pixiv\.net\/(auth\/token) url script-response-body https://github.com/ddgksf2013/Scripts/raw/master/pixivAds.js

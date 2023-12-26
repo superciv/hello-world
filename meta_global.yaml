@@ -1,0 +1,125 @@
+#==========================================
+# 本配置转发所有流量到你的vps，在ipv6环境下达到免流目的
+# 使用TUN模式代理所有流量，可以让你所有的软件正常使用
+# TUN下windows的Internet访问检测可以顺利通过，不会小地球
+# 对于腾讯和游戏的流量直连，避免异地登录提示、方便玩游戏
+#==========================================
+
+mixed-port: 7890 
+
+allow-lan: false 
+bind-address: "*"
+mode: rule       
+log-level: info  
+ipv6: true       
+unified-delay: true
+external-controller: 0.0.0.0:9090 
+
+# 更改geoip使用文件,mmdb或者dat,true为dat
+geodata-mode: true
+geox-url:
+  geoip: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geoip.dat"
+  geosite: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/geosite.dat"
+  mmdb: "https://fastly.jsdelivr.net/gh/MetaCubeX/meta-rules-dat@release/country.mmdb"
+
+profile:
+  store-selected: true
+  # 储存 API 对策略组的选择，以供下次启动时使用
+  store-fake-ip: true
+  # 储存 fakeip 映射表，域名再次发生连接时，使用原有映射地址
+
+sniffer:                           #【Meta专属】sniffer域名嗅探器
+  enable: true                     # 嗅探器开关
+  override-destination: false
+  sniff: # TLS 默认如果不配置 ports 默认嗅探 443
+    TLS:
+      ports: [443, 8443]
+    HTTP: # 需要嗅探的端口, 默认嗅探 80
+      ports: [80, 8080-8880]
+      override-destination: true # 可覆盖 sniffer.override-destination
+  force-domain:
+    - +.v2ex.com
+    - "+.netflix.com"
+    - "+.nflxvideo.net"
+    - "+.amazonaws.com"
+    - "+.media.dssott.com"
+  # 白名单,跳过嗅探结果
+  skip-domain:
+    - Mijia Cloud
+    - "+.apple.com"
+    - dlg.io.mi.com
+
+dns:
+  cache-algorithm: arc
+  enable: true    
+  ipv6: true
+  listen: 0.0.0.0:1053 
+  enhanced-mode: fake-ip
+  fake-ip-range: 198.18.0.1/16
+  fake-ip-filter:
+    - "*.lan"
+    - localhost.ptlogin2.qq.com
+    - +.msftconnecttest.com
+    - +.msftncsi.com
+  nameserver:
+    - system
+  nameserver-policy:
+    "rule-set:Ad": rcode://success
+
+tun:
+  enable: true
+  mtu: 9000
+  stack: mixed
+  device: utun
+  dns-hijack:
+    - any:53
+  auto-route: true
+  auto-detect-interface: true
+    
+proxies: 
+  - name: "proxy" #请不要改名字，否则需要修改下面rules部分对应的名字
+    type: 
+    server: #填写你vps的ipv6地址
+    port: 
+    # 请自行补全你代理的剩余配置
+
+rule-providers:
+  Direct:
+    behavior: classical 
+    interval: 259200
+    path: ./ruleset/Direct.yaml
+    type: http 
+    url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Direct/Direct.yaml
+  Lan:
+    behavior: classical 
+    interval: 259200
+    path: ./ruleset/Lan.yaml
+    type: http 
+    url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Lan/Lan.yaml
+  Ad:
+    behavior: domain
+    interval: 259200
+    path: ./ruleset/anti-ad-clash.yaml
+    type: http
+    url: https://anti-ad.net/clash.yaml
+  Tencent:
+    behavior: classical
+    interval: 259200
+    path: ./ruleset/Tencent.yaml
+    type: http
+    url: https://raw.githubusercontent.com/blackmatrix7/ios_rule_script/master/rule/Clash/Tencent/Tencent.yaml
+
+rules:
+  - DOMAIN-SUFFIX,bjut.edu.cn,DIRECT
+  - DOMAIN-SUFFIX,zhan.com,DIRECT
+  - DOMAIN-SUFFIX,xdf.cn,DIRECT
+  - DOMAIN-KEYWORD,hikarifield,DIRECT
+  - RULE-SET,Direct,DIRECT
+  - RULE-SET,Lan,DIRECT
+  - RULE-SET,Ad,REJECT
+  - RULE-SET,Tencent,DIRECT
+  - DOMAIN,autopatchcn.bhsr.com,proxy
+  - GEOSITE,mihoyo-cn,DIRECT
+  - GEOSITE,category-games@cn,DIRECT
+  - GEOIP,private,DIRECT,no-resolve
+  - MATCH,proxy

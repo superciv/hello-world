@@ -1,10 +1,3 @@
-#==========================================
-# 本配置转发所有流量到你的vps，在ipv6环境下达到免流目的
-# 使用TUN模式代理所有流量，可以让你所有的软件正常使用
-# TUN下windows的Internet访问检测可以顺利通过，不会小地球
-# 对于腾讯和游戏的流量直连，避免异地登录提示、方便玩游戏
-#==========================================
-
 mixed-port: 7890 
 
 allow-lan: false 
@@ -62,9 +55,14 @@ dns:
     - +.msftconnecttest.com
     - +.msftncsi.com
   nameserver:
-    - system
+    - 'tls://8.8.4.4#dns'
+    - 'tls://1.1.1.1#dns'
   nameserver-policy:
     "rule-set:Ad": rcode://success
+    "geosite:cn,private,microsoft@cn,apple@cn,category-games@cn":
+      - 119.29.29.29
+      - 223.5.5.5
+      - system
 
 tun:
   enable: true
@@ -77,11 +75,28 @@ tun:
   auto-detect-interface: true
     
 proxies: 
-  - name: "proxy" #请不要改名字，否则需要修改下面rules部分对应的名字
+  - name: "your_server"
     type: 
-    server: #填写你vps的ipv6地址
+    server: 
     port: 
-    # 请自行补全你代理的剩余配置
+
+
+proxy-providers:
+  your_subscribe:
+    type: http
+    interval: 259200
+    health-check: {enable: true, url: http://www.gstatic.com/generate_204, interval: 1800}
+    url: 
+
+
+proxy-groups:
+  - {name: 国内流量, type: select, proxies: [your_server, DIRECT]}
+  - {name: 米哈游, type: select, proxies: [DIRECT, your_server]}
+  - {name: 兜底流量, type: select, proxies: [your_server, 自动选择, DIRECT]}
+  - {name: 自动选择, type: url-test, lazy: true,  url: http://www.gstatic.com/generate_204, interval: 900, use: [your_subscribe]}
+  - {name: 谷歌学术, type: select, proxies: [自动选择, your_server]}
+  - {name: dns, type: select, proxies: [自动选择, your_server]}
+
 
 rule-providers:
   Direct:
@@ -118,8 +133,9 @@ rules:
   - RULE-SET,Lan,DIRECT
   - RULE-SET,Ad,REJECT
   - RULE-SET,Tencent,DIRECT
-  - DOMAIN,autopatchcn.bhsr.com,proxy
-  - GEOSITE,mihoyo-cn,DIRECT
+  - GEOSITE,mihoyo-cn,米哈游
   - GEOSITE,category-games@cn,DIRECT
+  - GEOSITE,google-scholar,谷歌学术
+  - GEOIP,CN,国内流量
   - GEOIP,private,DIRECT,no-resolve
-  - MATCH,proxy
+  - MATCH,兜底流量

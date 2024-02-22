@@ -53,7 +53,7 @@ sniffer:                           #【Meta专属】sniffer域名嗅探器
 
 dns:
   cache-algorithm: arc
-  enable: true    
+  enable: true   
   ipv6: true
   listen: 0.0.0.0:1053 
   enhanced-mode: fake-ip
@@ -64,8 +64,10 @@ dns:
     - +.msftconnecttest.com
     - +.msftncsi.com
   nameserver:
-    - 'tls://8.8.4.4#dns'
-    - 'tls://1.1.1.1#dns'
+    - https://1.15.50.48/verse
+    - https://175.178.80.157/dns-query
+    - 'tls://8.8.4.4#自动选择'
+    - 'tls://1.1.1.1#自动选择'
   nameserver-policy:
     "geosite:category-ads-all": rcode://success
     "geosite:cn,private,microsoft@cn,apple@cn,category-games@cn":
@@ -75,36 +77,41 @@ dns:
 
 tun:
   enable: true
-  mtu: 1400
   stack: mixed
   device: utun
   dns-hijack:
-    - any:53
+    - "any:53"
   auto-route: true
   auto-detect-interface: true
-    
-proxies: 
-  - name: Singapore
-    type: 
-    server: 
-    port: 
 
+# 策略组引用
+p:    &a1 {type: http,     interval: 259200,  health-check: {enable: true, url: http://www.gstatic.com/generate_204, interval: 1800} }
+auto: &a4 {type: url-test, lazy: true,  url: http://www.gstatic.com/generate_204, interval: 900, use: [Subscribe] }
+    
+proxies: null
 proxy-providers:
   Subscribe:
-    type: http
-    interval: 259200
-    health-check: {enable: true, url: http://www.gstatic.com/generate_204, interval: 1800}
-    url: 
-    path: ./proxy_providers/tmp.yaml
+    <<: *a1
+    url: %your url, recommend https://my.ipv6boy.com/index.php#/register?code=OjqA2mwl
+    path: ./proxy_providers/temp.yaml
 
 
 proxy-groups:
-  - {name: 国内流量, type: select, proxies: [Singapore, DIRECT]}
-  - {name: 国内游戏, type: select, proxies: [DIRECT, Singapore]}
-  - {name: 代理流量, type: select, proxies: [Singapore, 自动选择, DIRECT]}
-  - {name: 自动选择, type: url-test, lazy: true,  url: http://www.gstatic.com/generate_204, interval: 900, use: [Subscribe]}
-  - {name: 美国节点, type: url-test, lazy: true,  url: http://www.gstatic.com/generate_204, interval: 900, use: [Subscribe], filter: "美|US|(?i)States|American"}
-  - {name: dns, type: select, proxies: [自动选择, Singapore]}
+  - {name: 国内流量, type: select, proxies: [DIRECT, 免流节点]}
+  - {name: 百度网盘, type: select, proxies: [DIRECT, 免流节点]}
+  - {name: 游戏流量, type: select, proxies: [DIRECT, 免流节点, 手动选择]}
+  - {name: 免流流量, type: select, proxies: [免流节点, DIRECT]}
+  - {name: 代理流量, type: select, proxies: [免流节点, 自动选择, 手动选择]}
+  - {name: 手动选择, type: select, proxies: [香港节点,日本节点,台湾节点,美国节点,狮城节点]}
+
+  #节点分组
+  - {name: 自动选择, <<: *a4                                     }
+  - {name: 香港节点, <<: *a4, filter: "港|HK|(?i)Hong"           }
+  - {name: 日本节点, <<: *a4, filter: "日|东京|JP|(?i)Japan"     }
+  - {name: 台湾节点, <<: *a4, filter: "台|湾|TW|(?i)Taiwan"      }
+  - {name: 美国节点, <<: *a4, filter: "美|US|(?i)States|American"}
+  - {name: 狮城节点, <<: *a4, filter: "新|坡|SG|(?i)Singapore"   }
+  - {name: 免流节点, <<: *a4, exclude-filter: "3x|5x|10x"        }
 
 
 rule-providers:
@@ -115,44 +122,39 @@ rule-providers:
     type: http 
     url: https://cdn.jsdelivr.net/gh/blackmatrix7/ios_rule_script@master/rule/Clash/Direct/Direct.yaml
 
+
 rules:
-  - PROCESS-NAME,qbittorrent.exe,DIRECT
-  - PROCESS-NAME,qq.exe,DIRECT
-  - PROCESS-NAME,wechat.exe,DIRECT
-  - PROCESS-NAME,WeChatAppEx.exe,DIRECT
-  - PROCESS-NAME,WeChatUtility.exe,DIRECT
-
-  - DOMAIN,time.is,DIRECT
-  - DOMAIN-SUFFIX,edu.cn,DIRECT
-  - DOMAIN-KEYWORD,mikuclub,DIRECT
-  - DOMAIN-KEYWORD,hikarifield,DIRECT
-  - DOMAIN-KEYWORD,wenku8,DIRECT
-  - DOMAIN-KEYWORD,lightnovel,DIRECT
-  - DOMAIN-KEYWORD,hikarifield,DIRECT
-  - DOMAIN-KEYWORD,clarivate,DIRECT
-  - DOMAIN-KEYWORD,webofscience,DIRECT
-  - DOMAIN-KEYWORD,sciencedirect,DIRECT
-
   - GEOIP,private,DIRECT,no-resolve
   - RULE-SET,Direct,DIRECT
   - GEOSITE,category-ads-all,REJECT
 
-  - GEOSITE,bilibili,国内流量
-  - GEOSITE,tencent-games,国内游戏
-  - GEOSITE,mihoyo-cn,国内游戏
-  - GEOSITE,steam@cn,DIRECT
-  - GEOSITE,google-scholar,自动选择
+  - DOMAIN,time.is,DIRECT
+  - DOMAIN-KEYWORD,mikuclub,DIRECT
+  - DOMAIN-KEYWORD,hikarifield,DIRECT
+  - DOMAIN-KEYWORD,wenku8,DIRECT
+  - DOMAIN-KEYWORD,lightnovel,DIRECT
+  - DOMAIN-SUFFIX,dogfight360.com,代理流量
+
+  - GEOSITE,clarivate,DIRECT
+  - GEOSITE,sciencedirect,DIRECT
+  - GEOSITE,cnki,DIRECT
+  - GEOSITE,bilibili,免流流量
+  - GEOSITE,huya,免流流量
+  - GEOSITE,netease,免流流量
+  - GEOSITE,baidu,百度网盘
+  - GEOSITE,apple@cn,国内流量
+  - GEOSITE,microsoft@cn,国内流量
+  - GEOSITE,category-games@cn,游戏流量
   - GEOSITE,bing,美国节点
   - GEOSITE,openai,美国节点
   - GEOSITE,anthropic,美国节点
-  - GEOSITE,apple,代理流量
+  - GEOSITE,youtube,代理流量
   - GEOSITE,github,代理流量
-  - GEOSITE,microsoft,代理流量
+  - GEOSITE,CN,国内流量
   - GEOSITE,geolocation-!cn,代理流量
-
+  
   - GEOIP,google,代理流量
   - GEOIP,telegram,代理流量
   - GEOIP,twitter,代理流量
-  - GEOSITE,CN,国内流量
   - GEOIP,CN,国内流量
   - MATCH,代理流量
